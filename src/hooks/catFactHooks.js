@@ -4,19 +4,24 @@ import React, { useEffect, useCallback, useMemo } from 'react'
 export function useCatImage ({fact}) {
     const [image, setImage] = React.useState(null);
     const [imageLoaded, setImageLoaded] = React.useState(false)
+    const [error, setError] = React.useState(null)
 
-    
     const threeFirstWords = useMemo(() => fact.split(' ', 3).join(' '), [fact])
 
     const handleImage = useCallback(async () => {
-        if(!fact) 
+        if(!threeFirstWords) 
             return
-
-        console.log('getting image')
-        setImageLoaded(false)
-        const url = await getImageFact(threeFirstWords)
-        setImageLoaded(true)
-        setImage(url)
+        
+        try {
+            setImageLoaded(false)
+            const url = await getImageFact(threeFirstWords)
+            setImage(url)
+        } catch (e) {
+            setError(e)
+            
+        } finally {
+            setImageLoaded(true)
+        }
     }, [threeFirstWords])
 
     
@@ -24,20 +29,33 @@ export function useCatImage ({fact}) {
         handleImage()
     }, [handleImage]);
     
-    return {image, imageLoaded, threeFirstWords}
+    return {image, imageLoaded, threeFirstWords, imgError: error}
 }
 
 export function useCatFact () {
     const [fact, setFact] = React.useState('');
-
+    const [error, setError] = React.useState(null)
+    const [factLoaded, setFactLoaded] = React.useState(false)
     const refreshFact = async () => {
-        const fact = await getFact()
-        setFact(fact)
+        try {
+            setFactLoaded(false)
+            const fact = await getFact()
+            setFact(fact)
+        } catch (e) {
+            setError(e)
+        } finally {
+            setFactLoaded(true)
+        }
     }
 
     useEffect(() => { 
         refreshFact()
     }, []);
 
-    return {fact,refreshFact}
+    return {
+        fact,
+        refreshFact, 
+        factError: error,
+        factLoaded,
+    }
 }
